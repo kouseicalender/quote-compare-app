@@ -47,7 +47,7 @@ document.getElementById('pdf-upload').addEventListener('change', async function(
   reader.readAsArrayBuffer(file);
 });
 
-// PDFの名言抽出（2日ずつ）
+// PDFの名言抽出（2日分セット）
 function extractSmartQuotes(lines) {
   const results = [];
   let day = 1;
@@ -67,7 +67,7 @@ function extractSmartQuotes(lines) {
         const maybeJa1 = window[j + 3];
         const maybeJa2 = window[j + 4];
 
-        const isValidInfo = /^[（(][0-9B.C.～年・）\\s\\-～]+/.test(maybeInfo);
+        const isValidInfo = /^[（(][0-9B.C.～年・）\s\-～]+/.test(maybeInfo);
         const isEn = /[a-zA-Z]/.test(maybeEn);
         const isJa = /[ぁ-んァ-ン一-龯]/.test(maybeJa1 + maybeJa2);
 
@@ -94,7 +94,11 @@ function extractSmartQuotes(lines) {
   return results;
 }
 
-// 比較実行
+// 比較処理（DOMContentLoaded後にボタンに紐付け）
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("compare-btn").addEventListener("click", compareQuotes);
+});
+
 function compareQuotes() {
   const dmp = new diff_match_patch();
   const table = document.createElement('table');

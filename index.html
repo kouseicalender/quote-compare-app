@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>名言比較統合アプリ（Excel＋PDF）</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/20121119/diff_match_patch.min.js"></script>
+
+  <!-- ライブラリ読み込み（すべて defer 付き） -->
+  <script defer src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/20121119/diff_match_patch.min.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
   <h1>名言比較統合アプリ（Excel＋PDF）</h1>
@@ -20,7 +22,7 @@
     <label for="pdf-upload">PDFファイルを選択:</label>
     <input type="file" id="pdf-upload" accept="application/pdf">
 
-    <button onclick="compareQuotes()">比較開始</button>
+    <button id="compare-btn">比較開始</button>
   </div>
 
   <div id="output"></div>
