@@ -47,7 +47,7 @@ document.getElementById('pdf-upload').addEventListener('change', async function(
   reader.readAsArrayBuffer(file);
 });
 
-// PDFの名言抽出（2日分セット）
+// PDFの名言抽出（2日分ずつ）
 function extractSmartQuotes(lines) {
   const results = [];
   let day = 1;
@@ -94,11 +94,7 @@ function extractSmartQuotes(lines) {
   return results;
 }
 
-// 比較処理（DOMContentLoaded後にボタンに紐付け）
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("compare-btn").addEventListener("click", compareQuotes);
-});
-
+// 比較関数
 function compareQuotes() {
   const dmp = new diff_match_patch();
   const table = document.createElement('table');
@@ -129,6 +125,10 @@ function compareQuotes() {
   document.getElementById('output').appendChild(table);
 }
 
+// ラベル整形
 function label(type) {
   return type === 'jp' ? '日本語' : type === 'en' ? '英語' : '出典';
 }
+
+// ✅ compareQuotes をグローバルスコープに公開
+window.compareQuotes = compareQuotes;
