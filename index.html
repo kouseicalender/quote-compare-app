@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>名言比較アプリ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/20121119/diff_match_patch.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 5px; vertical-align: top; }
+    th { background-color: #eee; }
+    .mismatch { background-color: #ffdddd; }
+    .error { background-color: #fdd; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>名言比較アプリ（Excel vs PDF）</h1>
+
+  <label>Excelファイルを選択: <input type="file" id="excelInput" /></label><br><br>
+  <label>PDF由来のテキストファイルを選択: <input type="file" id="pdfInput" /></label><br><br>
+
+  <button onclick="compareQuotes()">比較開始</button>
+
+  <div id="result"></div>
+
+  <script>
+    let excelData = [];
+    let pdfData = [];
+
+    document.getElementById('excelInput').addEventListener('change', handleExcel);
+    document.getElementById('pdfInput').addEventListener('change', handlePDF);
+
+    function handleExcel(e) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        excelData = raw.slice(1).map(row => {
+          const [month, day, jp, en, source] = row;
+          if (!jp || !en || !source) return null;
+          return {
+            date: `${month}月${day}日`,
+            jp: jp.toString().trim(),
+            en: en.toString().trim(),
+            source: source.toString().trim()
+          };
+        }).filter(x => x);
+      };
+      reader.readAsBinaryString(e.target.files[0]);
+    }
+
+    function handlePDF(e) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target.result;
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line);
+        pdfData = [];
+        for (let i = 0; i < lines.length - 2; i++) {
+          const source = lines[i];
+          const en = lines[i + 1];
+          const jp = lines[i + 2];
+          if (source.match(/[\u4e00-\u9faf].*[（(]\d/)) {
+            pdfData.push({ jp, en, source });
+            i += 2;
+          }
+        }
+      };
+      reader.readAsText(e.target.files[0], 'UTF-8');
+    }
+
+    function compareQuotes() {
+      const dmp = new diff_match_patch();
+      const table = document.createElement('table');
+      table.innerHTML = '<tr><th>日付</th><th>項目</th><th>Excel</th><th>PDF</th><th>判定</th></tr>';
+
+      for (let i = 0; i < excelData.length; i++) {
+        const ex = excelData[i];
+        const pdf = pdfData[i];
+
+        if (!pdf) {
+          ['jp', 'en', 'source'].forEach(type => {
+            const row = table.insertRow();
+            row.innerHTML = `<td>${ex.date}</td><td>${label(type)}</td><td>${ex[type]}</td><td class="error">データなし</td><td class="error">エラー</td>`;
+          });
+          continue;
+        }
+
+        ['jp', 'en', 'source'].forEach(type => {
+          const row = table.insertRow();
+          const diffs = dmp.diff_main(ex[type], pdf[type]);
+          dmp.diff_cleanupSemantic(diffs);
+          const html = dmp.diff_prettyHtml(diffs);
+          const match = ex[type] === pdf[type];
+          row.innerHTML = `<td>${ex.date}</td><td>${label(type)}</td><td>${ex[type]}</td><td class="${match ? '' : 'mismatch'}">${match ? pdf[type] : html}</td><td>${match ? '一致' : '不一致'}</td>`;
+        });
+      }
+
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('result').appendChild(table);
+    }
+
+    function label(type) {
+      return type === 'jp' ? '日本語' : type === 'en' ? '英語' : '出典';
+    }
+  </script>
+</body>
+</html>
